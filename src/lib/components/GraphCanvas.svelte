@@ -6,45 +6,30 @@
   import type { Attributes } from 'graphology-types';
   import { graphStore } from '../stores/graphStore';
   import {positions} from '../stores/positions'
-  import type { Obj } from '../types';
+  import type { Obj, Point } from '../types';
   import * as R from 'ramda';
+  import { get } from 'svelte/store';
 
   let container: HTMLDivElement;
 
+  $: graphData = get(graphStore.data)
+    $: graphLayout = get(graphStore.layout)
+
   //onMount, for every Node in graphStore whose key is not present in the layoutStore, instantiate it in the Layout store with arbitrary coordinates
 
-  // Load positions from localStorage
+ // Load positions from localStorage
   onMount(() => {
-    const updatePositions = R.pipe(
-      (saved: string | null) => saved ? JSON.parse(saved) : {},
-      (parsed: Obj) => positions.update(pos => {
-        let changed = false;
-        for (const node of graphStore!.nodes()) {
-          if (!parsed[node]) {
-            parsed[node] = { x: 100 + Math.random() * 300, y: 100 + Math.random() * 300 };
-            changed = true;
-          }
-        }
-        if (changed) localStorage.setItem('nodePositions', JSON.stringify(parsed));
-        return { ...parsed };
-      })
+    const positions: Record<string, { x: number; y: number }> = Object.fromEntries(
+      graphData.nodes().map(key => [key, { x: 100 + Math.random() * 300, y: 100 + Math.random() * 300 }])
     );
-    updatePositions(localStorage.getItem('nodePositions'));
+    localStorage.setItem('nodePositions', JSON.stringify(positions));
+    graphStore.placeNodes(positions);
+    console.log("graphLayout", graphLayout)
   });
 
   function handleNodeDrag(key: string, dx: number, dy: number) {
-    positions.update(pos => {
-      const newPos = {
-        ...pos,
-        [key]: {
-          x: pos[key].x + dx,
-          y: pos[key].y + dy
-        }
-      };
-      // Uncomment to persist
-      // localStorage.setItem('nodePositions', JSON.stringify(newPos));
-      return newPos;
-    });
+    console.log("dragging node", key, dx, dy)
+    graphStore.displaceNodes({ [key]: { dx, dy } });
   }
 
   interface EdgeData {
@@ -56,15 +41,22 @@
     };
   }
 
-  $: nodes = graphStore
-    ? graphStore.nodes().map((node: string) => ({
-        key: node,
-        operation: graphStore!.getNodeAttributes(node).operation,
-       
-      }))
-    : [];
+    const nodes = derived([graphStore.data, graphStore.layout], ([$graphData, $graphLayout]) => {
+      return $graphData.nodes().map(key => ({
+        key,
+        operation: $graphData.getNodeAttributes(key).operation,
+        position: $graphLayout?.[key]?.position || { x: 0, y: 0 }
+      }));
+    });
 
-  type Point = { x: number; y: number }
+//   $: nodes = graphStore
+//     ? graphStore.nodes().map((node: string) => ({
+//         key: node,
+//         operation: graphStore!.getNodeAttributes(node).operation,
+       
+//       }))
+//     : [];
+
 
   // Returns an SVG path string for a cubic spline between two points
   function DrawEdge(sourcePoint: Point, targetPoint: Point): string {
@@ -79,51 +71,45 @@
   }
 
 
-  // Derived store for edge paths
+  //Derived store for edge paths
   const edgePaths = derived([
-    positions,
-    graphStore
-  ], ([$positions, graphStore]) =>
-    R.pipe(
-      () => graphStore
-        ? graphStore.edges().map((edge: string) => ({
-            key: edge,
-            source: graphStore!.source(edge),
-            target: graphStore!.target(edge),
-            attributes: graphStore!.getEdgeAttributes(edge)
-          })) as EdgeData[]
-        : [],
-      R.map((edge: EdgeData) => {
-        const sourceNode = nodes.find(n => n.key === edge.source);
-        const targetNode = nodes.find(n => n.key === edge.target);
-        if (!sourceNode || !targetNode) return { key: edge.key, path: '' };
-        const sourcePos = $positions[sourceNode.key] || { x: 0, y: 0 };
-        const targetPos = $positions[targetNode.key] || { x: 0, y: 0 };
-        const sourceX = sourcePos.x + 150;
-        const sourceY = sourcePos.y + 100 / 2;
-        const targetX = targetPos.x;
-        const targetNodeHeight = 100;
-        const inputCount = operators[targetNode.operation as keyof typeof operators]?.operation?.length ?? 0;
-        const portSpacing = targetNodeHeight / (inputCount + 1);
-        const targetY = targetPos.y + (edge.attributes.targetPort + 1) * portSpacing;
-        const dx = targetX - sourceX;
-        const controlPoint1X = sourceX + dx * 0.5;
-        const controlPoint2X = targetX - dx * 0.5;
-        const path = `M ${sourceX} ${sourceY} C ${controlPoint1X} ${sourceY}, ${controlPoint2X} ${targetY}, ${targetX} ${targetY}`;
-        return { key: edge.key, path };
-      })
-    )()
-  );
+    graphStore.data,
+    graphStore.layout,
+    nodes
+  ], ([$graphData, $graphLayout, $nodes]) => {
+    return $graphData.edges().map((edge: string) => {
+      const source = $graphData.source(edge);
+      const target = $graphData.target(edge);
+      const attributes = $graphData.getEdgeAttributes(edge);
+      const sourceNode = $nodes.find((n: any) => n.key === source);
+      const targetNode = $nodes.find((n: any) => n.key === target);
+      if (!sourceNode || !targetNode) return { key: edge, path: '' };
+      const sourcePos = sourceNode.position;
+      const targetPos = targetNode.position;
+      const sourceX = sourcePos.x + 150;
+      const sourceY = sourcePos.y + 100 / 2;
+      const targetX = targetPos.x;
+      const targetNodeHeight = 100;
+      const inputCount = operators[targetNode.operation as keyof typeof operators]?.operation?.length ?? 0;
+      const portSpacing = targetNodeHeight / (inputCount + 1);
+      const targetY = targetPos.y + (attributes.targetPort + 1) * portSpacing;
+      const dx = targetX - sourceX;
+      const controlPoint1X = sourceX + dx * 0.5;
+      const controlPoint2X = targetX - dx * 0.5;
+      const path = `M ${sourceX} ${sourceY} C ${controlPoint1X} ${sourceY}, ${controlPoint2X} ${targetY}, ${targetX} ${targetY}`;
+      return { key: edge, path };
+    });
+  });
 
 
 </script>
 
 <div class="graph-container" bind:this={container}>
-  {#each nodes as node (node.key)}
+  {#each $nodes as node (node.key)}
     <Node
       key={node.key}
-      opKey={node.operation}
-      position={$positions[node.key]}
+      operationName={node.operation}
+      position={node.position}
       onDragMove={handleNodeDrag}
     />
   {/each}

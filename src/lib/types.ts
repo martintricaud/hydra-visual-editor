@@ -29,3 +29,14 @@ export type Synth = InstanceType<typeof Hydra>;
 export type Args<T> = T extends (...args: infer A) => any ? A : never;
 
 export type HydraFactory = (canvas: HTMLCanvasElement) => Synth
+
+export type Node = {
+    key: string;
+    attributes: any;
+}
+
+export type Edge = {
+    source: string;
+    target: string;
+    attributes: any;
+}

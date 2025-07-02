@@ -2,22 +2,27 @@
   import { operators } from "../operators";
   import { draggable } from "../actions/draggable";
   import type { Operator } from "../types";
-  import { graphStore } from "../stores/graphStore";
+  import { graphStore, DataFlowGraph } from "../stores/graphStore";
   import { writable } from "svelte/store";
   import HydraRenderer from './HydraRenderer.svelte';
   // @ts-ignore
   export let key: string;
   export let position: { x: number; y: number } = { x: 0, y: 0 };
-  export let opKey: keyof typeof operators;
+  export let operationName: keyof typeof operators;
   export let onDragMove: (key: string, dx: number, dy: number) => void;
+  import { get } from "svelte/store";
 
   //make the operation of the node a "writable" so that it can be changed at runtime
-  const op = writable<Operator<any, any>>(operators[opKey]);
-  $: op.set(operators[opKey]);
+  const op = writable<Operator<any, any>>(operators[operationName]);
+  $: op.set(operators[operationName]);
   $: opExpression = $op.operation;
   $: inputCount = $op.dummyInputs.length ?? 0;
-  $: ports = Array.from({ length: inputCount });
-  $: colimit = $graphStore.colimit(key)[key]
+  $: ports = Array.from({ length: inputCount })
+$: console.log("hello")
+$: console.log(get(graphStore.data) instanceof DataFlowGraph)
+  $: colimit = get(graphStore.data).colimit(key)[key]
+
+  
  
   let previewResult: ReturnType<typeof opExpression>;
   $: previewResult = colimit();
@@ -39,8 +44,8 @@
   <!-- Main content -->
   <!-- TODO: replace with a more robust condition -->
   <div class="nodeContent">
-    <div class="operationName">{opKey}</div>
-    {#if opKey.startsWith("hydra")} 
+    <div class="operationName">{operationName}</div>
+    {#if operationName.startsWith("hydra")} 
     <HydraRenderer synthFactory={colimit} />
     {:else}
     <div class="outputPreview">{colimit()}</div>
