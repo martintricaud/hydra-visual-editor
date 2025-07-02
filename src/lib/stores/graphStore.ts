@@ -145,6 +145,12 @@ export const createGraphStore2 = (
 	destroyNode,
 	createEdge,
 	destroyEdge,
+    nodes: () => graph.nodes(),
+	edges: () => graph.edges(),
+	getNodeAttributes: (key: string) => graph.getNodeAttributes(key),
+	getEdgeAttributes: (key: string) => graph.getEdgeAttributes(key),
+	source: (edge: string) => graph.source(edge),
+	target: (edge: string) => graph.target(edge),
 	layout: {
 	  subscribe: graphLayoutStore.subscribe,
 	},
@@ -189,10 +195,6 @@ export function createGraphStore(
 	update();
   }
 
-  function clear() {
-	graph.clear();
-	update();
-  }
 
   // Populate the graph using the public addNode/addEdge methods
   for (const node of nodes) {
@@ -208,7 +210,6 @@ export function createGraphStore(
 	addEdge,
 	removeNode,
 	removeEdge,
-	clear,
 	nodes: () => graph.nodes(),
 	edges: () => graph.edges(),
 	getNodeAttributes: (key: string) => graph.getNodeAttributes(key),
