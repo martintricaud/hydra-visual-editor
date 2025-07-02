@@ -18,8 +18,6 @@
   $: opExpression = $op.operation;
   $: inputCount = $op.dummyInputs.length ?? 0;
   $: ports = Array.from({ length: inputCount })
-$: console.log("hello")
-$: console.log(get(graphStore.data) instanceof DataFlowGraph)
   $: colimit = get(graphStore.data).colimit(key)[key]
 
   

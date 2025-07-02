@@ -191,63 +191,6 @@ export const createGraphStore2 = (
 }
 
 
-// export function createGraphStore(
-//     nodes: { key: string; attributes: any }[],
-//     edges: { source: string; target: string; attributes?: any }[]
-// ) {
-//     const graph: InstanceType<typeof DataFlowGraph> = new DataFlowGraph({ type: 'directed', allowSelfLoops: true });
-//     const graphStore: Writable<InstanceType<typeof DataFlowGraph>> = writable(graph);
-
-//     function update() {
-//         graphStore.set(graph);
-//     }
-
-//     function addNode(key: string, attributes: any) {
-//         graph.addNode(key, { ...attributes });
-//         update();
-//     }
-
-//     function addEdge(source: string, target: string, attributes: any = {}) {
-//         graph.addEdge(source, target, attributes);
-//         update();
-//     }
-
-//     function removeNode(key: string) {
-
-//         graph.dropNode(key);
-//         // then 
-//         update();
-//     }
-
-//     function removeEdge(source: string, target: string) {
-//         graph.dropEdge(source, target);
-//         update();
-//     }
-
-
-//     // Populate the graph using the public addNode/addEdge methods
-//     for (const node of nodes) {
-//         addNode(node.key, node.attributes);
-//     }
-//     for (const edge of edges) {
-//         addEdge(edge.source, edge.target, edge.attributes ?? {});
-//     }
-
-//     return {
-//         subscribe: graphStore.subscribe,
-//         addNode,
-//         addEdge,
-//         removeNode,
-//         removeEdge,
-//         nodes: () => graph.nodes(),
-//         edges: () => graph.edges(),
-//         getNodeAttributes: (key: string) => graph.getNodeAttributes(key),
-//         getEdgeAttributes: (key: string) => graph.getEdgeAttributes(key),
-//         source: (edge: string) => graph.source(edge),
-//         target: (edge: string) => graph.target(edge),
-//     };
-// }
-
 const nodeList = [
     { key: 'add1', operationName: 'add' },
     { key: 'add2', operationName: 'add' },
@@ -271,16 +214,6 @@ export const graphStore = createGraphStore2(
         }
     },nodeList),
 
-//     [
-//     { key: 'add1', attributes: { operation: 'add' } },
-//     { key: 'add2', attributes: { operation: 'add' } },
-//     { key: 'hydraNoise', attributes: { operation: 'hydraNoise' } },
-//     { key: 'hydraOsc', attributes: { operation: 'hydraOsc' } },
-//     { key: 'hydraPosterize', attributes: { operation: 'hydraPosterize' } },
-//     { key: 'hydraBlend', attributes: { operation: 'hydraBlend' } },
-//     { key: 'multiply', attributes: { operation: 'multiply' } },
-//     { key: 'multiply2', attributes: { operation: 'multiply' } },
-//   ],
     [
         { source: 'add1', target: 'multiply', attributes: { targetPort: 0 } },
         { source: 'add2', target: 'multiply', attributes: { targetPort: 1 } },
