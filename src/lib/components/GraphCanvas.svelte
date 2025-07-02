@@ -5,7 +5,6 @@
     import { writable, derived } from "svelte/store";
     import type { Attributes } from "graphology-types";
     import { graphStore } from "../stores/graphStore";
-    import { positions } from "../stores/positions";
     import type { Obj, Point } from "../types";
     import * as R from "ramda";
     import { get } from "svelte/store";
@@ -35,7 +34,6 @@
     });
 
     function handleNodeDrag(key: string, dx: number, dy: number) {
-        console.log("dragging node", key, dx, dy);
         graphStore.displaceNodes({ [key]: { dx, dy } });
     }
 
