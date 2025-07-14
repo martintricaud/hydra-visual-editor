@@ -11,7 +11,7 @@ To the best of my knowledge, no reactive framework exposes the network of reacti
 In HVE, the reactive program is exposed as a graph object, using the implementation provided by Graphology.
 Graphology's base graph class is extended with a few niceties.
 
-In particular there are two methods that do most of the heavy lifting, which loosely adapt some concepts from category theory):
+In particular there are two methods that do most of the heavy lifting (and which loosely adapt some concepts from category theory):
 
 - one function to compute **pushouts** (a generalization of function composition that works even when operators have multiple inputs and outputs)
 - one function to compute the **colimit** of a graph of operators (which you can think of as the result of iteratively applying pushouts to “stitch together” all upstream operators of a node into a single composite system).
