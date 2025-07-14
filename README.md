@@ -9,9 +9,15 @@ To the best of my knowledge, no reactive framework exposes the network of reacti
 
 
 In HVE, the reactive program is exposed as a graph object, using the implementation provided by Graphology.
-Graphology's base graph class is extended with a few niceties, namely a method to compute the colimit of a diagram (this will sound familiar to categoricians).
-The core idea is that the observable value at any output port of a diagram is the result of evaluating the colimit of the ancestor graph at that point.
-For now, the colimit is computed with the assumption that the graph is acyclic.
+Graphology's base graph class is extended with a few niceties.
+
+In particular there are two methods that do most of the heavy lifting, which loosely adapt some concepts from category theory):
+
+- one function to compute **pushouts** (a generalization of function composition that works even when operators have multiple inputs and outputs)
+- one function to compute the **colimit** of a graph of operators (which you can think of as the result of iteratively applying pushouts to “stitch together” all upstream operators of a node into a single composite system).
+    
+The output of any node is given by evaluating the colimit of its ancestor graph.
+All you need to do is wrap the computation of colimits into a reactive statement, and voilà.
 
 
 
